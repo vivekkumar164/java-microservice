@@ -3,6 +3,7 @@ package com.example.employeeService.service.impl;
 import com.example.employeeService.dto.ApiResponseDto;
 import com.example.employeeService.dto.DepartmentDto;
 import com.example.employeeService.dto.EmployeeDto;
+import com.example.employeeService.dto.OrganizationDto;
 import com.example.employeeService.entity.Employee;
 import com.example.employeeService.mapper.EmployeeDtoMapper;
 import com.example.employeeService.repository.EmployeeRepository;
@@ -49,7 +50,7 @@ public class EmployeeServiceImpl implements EmployeeService {
     @Retry(name = "${spring.application.name}" , fallbackMethod = "getDefaultDepartment")
     @Override
     public ApiResponseDto getEmployeeById(long id) {
-        System.out.println("***********************getEmployeeById department get *************************************");
+
         Employee employee = employeeRepository.findById(id).orElseThrow(()-> new RuntimeException("Resourse not found"));
 
 //        ResponseEntity<DepartmentDto> responseEntity = restTemplate.getForEntity("http://localhost:8080/api/departments/" + employee.getDepartmentCode(),
@@ -63,10 +64,17 @@ public class EmployeeServiceImpl implements EmployeeService {
                 .block(); // to make sure api call is synchronous .block is used
 
         //DepartmentDto departmentDto = apiClient.getDepartment(employee.getDepartmentCode());
+        System.out.println("***********************getEmployeeById department get *************************************"+ employee.getOrganizationCode());
+        OrganizationDto organizationDto = webClient.get()
+                .uri("http://localhost:8083/api/organizations/" + employee.getOrganizationCode())
+                .retrieve()
+                .bodyToMono(OrganizationDto.class)
+                .block();
 
         ApiResponseDto apiResponseDto = new ApiResponseDto();
         apiResponseDto.setEmployee(EmployeeDtoMapper.toEmployeeDto(employee));
         apiResponseDto.setDepartment(departmentDto);
+        apiResponseDto.setOrganization(organizationDto);
 
         return apiResponseDto;
     }
